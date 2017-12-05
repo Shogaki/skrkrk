@@ -1,0 +1,125 @@
+<button id="zoom">+</button>
+				<button id="dezoom">-</button>
+				<button id="startbutton">Poster</button>
+				<div id="main">
+				<div class="camtitle">Mode Cam</div>
+				<br>
+				<video id="video"></video>
+			</div>
+				<div class="filt" id="contentContainer">
+				   <img id="thing" src="ressources/filter/anonymous.png">
+				</div>
+
+<canvas id="canvas" style="display: none;"></canvas>
+			</div>
+
+(function() {
+
+  var streaming = false,
+      video        = document.querySelector('#video'),
+      cover        = document.querySelector('#cover'),
+      canvas       = document.querySelector('#canvas'),
+      photo        = document.querySelector('#photo'),
+      startbutton  = document.querySelector('#startbutton'),
+      conteneur    = document.querySelector('#conteneur'),
+      data         = false,
+      width = 800,
+      height = 0;
+
+  navigator.getMedia = ( navigator.getUserMedia ||
+                         navigator.webkitGetUserMedia ||
+                         navigator.mozGetUserMedia ||
+                         navigator.msGetUserMedia);
+
+  navigator.getMedia(
+    {
+      video: true,
+      audio: false
+    },
+    function(stream) {
+      if (navigator.mozGetUserMedia) {
+        video.mozSrcObject = stream;
+      } else {
+        var vendorURL = window.URL || window.webkitURL;
+        video.src = vendorURL.createObjectURL(stream);
+      }
+      video.play();
+    },
+    function(err) {
+      console.log("An error occured! " + err);
+    }
+  );
+
+  video.addEventListener('canplay', function(ev){
+    if (!streaming) {
+      height = video.videoHeight / (video.videoWidth/width);
+      video.setAttribute('width', width);
+      video.setAttribute('height', height);
+      canvas.setAttribute('width', width);
+      canvas.setAttribute('height', height);
+      streaming = true;
+    }
+  }, false);
+
+  function takepicture() {
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext('2d').drawImage(video, 0, 0, width, height);
+    data = canvas.toDataURL('image/png');
+    
+  }
+
+  startbutton.addEventListener('click', function(ev){
+      takepicture();
+    ev.preventDefault();
+  }, false);
+
+})();
+
+var theThing = document.querySelector("#thing");
+var container = document.querySelector("#contentContainer");
+
+container.addEventListener("click", getClickPosition, false);
+
+function getClickPosition(e) {
+  var parentPosition = getPosition(e.currentTarget);
+  var yPosition = e.clientY - parentPosition.y + (container.clientHeight) - (theThing.clientHeight / 2);
+  var xPosition = e.clientX - parentPosition.x - (container.clientWidth / 2);
+  theThing.style.left = xPosition + "px";
+  theThing.style.top = yPosition + "px";
+}
+
+function getPosition(el) {
+  var xPos = 0;
+  var yPos = 0;
+ 
+  while (el) {
+  if (el.tagName == "BODY") {
+    var xScroll = el.scrollLeft || document.documentElement.scrollLeft;
+    var yScroll = el.scrollTop || document.documentElement.scrollTop;
+
+    xPos += (el.offsetLeft - xScroll + el.clientLeft);
+    yPos += (el.offsetTop - yScroll + el.clientTop);
+  } else {
+    xPos += (el.offsetLeft - el.scrollLeft + el.clientLeft);
+    yPos += (el.offsetTop - el.scrollTop + el.clientTop);
+  }
+  
+  el = el.offsetParent;
+  }
+  return {
+  x: xPos,
+  y: yPos
+  };
+}
+
+var zoom = document.querySelector("#zoom");
+var dezoom = document.querySelector("#dezoom");
+
+zoom.addEventListener('click', function(){
+  theThing.setAttribute('width', (theThing.clientWidth * 1.2));
+}, false);
+
+dezoom.addEventListener('click', function(){
+  theThing.setAttribute('width', (theThing.clientWidth / 1.2));
+}, false);
